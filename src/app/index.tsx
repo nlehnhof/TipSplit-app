@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../constants/theme';
 import { radius, spacing } from '../constants/themeColors';
@@ -25,6 +25,10 @@ import { SPLIT_METHOD_LABELS } from '../types/tipSplit';
 import { createId } from '../utils/id';
 import { parseDecimal, parseDollarsToCents } from '../utils/parse';
 import { loadLastCalculation, saveLastCalculation } from '../storage/lastCalculation';
+import { hasSeenOnboarding } from '../storage/onboarding';
+import { loadSavedWorkers } from '../storage/savedWorkers';
+import { appendHistoryEntry } from '../storage/history';
+import { useSubscription } from '../services/subscription/SubscriptionContext';
 
 function toWorkerInput(worker: DraftWorker, method: SplitMethod, showAdjustment: boolean): WorkerInput {
   const input: WorkerInput = {
@@ -53,6 +57,8 @@ function toWorkerInput(worker: DraftWorker, method: SplitMethod, showAdjustment:
 export default function CalculatorScreen() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const { isPremium } = useSubscription();
+  const params = useLocalSearchParams<{ loadWorkerIds?: string }>();
 
   const [totalTipsText, setTotalTipsText] = useState('');
   const [method, setMethod] = useState<SplitMethod>('hours');
@@ -62,6 +68,30 @@ export default function CalculatorScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [result, setResult] = useState<CalculateTipSplitSuccess | null>(null);
   const hydrated = useRef(false);
+
+  useEffect(() => {
+    hasSeenOnboarding().then((seen) => {
+      if (!seen) router.replace('/onboarding');
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!params.loadWorkerIds) return;
+    const ids = params.loadWorkerIds.split(',').filter(Boolean);
+    router.setParams({ loadWorkerIds: '' });
+    if (ids.length === 0) return;
+
+    loadSavedWorkers().then((saved) => {
+      const toAdd = saved.filter((w) => ids.includes(w.id));
+      setWorkers((prev) => {
+        const existingIds = new Set(prev.map((w) => w.id));
+        const drafts = toAdd
+          .filter((w) => !existingIds.has(w.id))
+          .map((w) => ({ ...createDraftWorker(w.id), name: w.name, role: w.role ?? '' }));
+        return [...prev, ...drafts];
+      });
+    });
+  }, [params.loadWorkerIds]);
 
   useEffect(() => {
     loadLastCalculation().then((stored) => {
@@ -123,6 +153,17 @@ export default function CalculatorScreen() {
     setErrorMessage(null);
     setResult(calcResult);
     setView('results');
+
+    if (isPremium) {
+      appendHistoryEntry({
+        id: createId('history'),
+        createdAt: new Date().toISOString(),
+        totalTipsCents: calcResult.totalTipsCents,
+        method: calcResult.method,
+        workerCount: calcResult.results.length,
+        results: calcResult.results,
+      });
+    }
   }
 
   function handleDone() {
@@ -182,11 +223,18 @@ export default function CalculatorScreen() {
           <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 0 }]}>
             Workers
           </Text>
-          <Pressable onPress={() => setShowAdvanced((v) => !v)}>
-            <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>
-              {showAdvanced ? 'Hide adjustments' : 'Adjustments'}
-            </Text>
-          </Pressable>
+          <View style={styles.workersHeaderActions}>
+            <Pressable onPress={() => router.push('/workers/select')}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>
+                Load Saved Workers
+              </Text>
+            </Pressable>
+            <Pressable onPress={() => setShowAdvanced((v) => !v)}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>
+                {showAdvanced ? 'Hide adjustments' : 'Adjustments'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.workerList}>
@@ -349,6 +397,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: spacing.md,
+  },
+  workersHeaderActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
   },
   workerList: {
     gap: spacing.sm,

@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 import { ThemeProvider, useThemeColors } from '../constants/theme';
+import { SubscriptionProvider } from '../services/subscription/SubscriptionContext';
 
 function RootStack() {
   const colors = useThemeColors();
@@ -19,7 +20,12 @@ function RootStack() {
         }}
       >
         <Stack.Screen name="index" options={{ title: 'TipSplit' }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="paywall" options={{ title: 'TipSplit Pro', presentation: 'modal' }} />
+        <Stack.Screen name="workers/index" options={{ title: 'Saved Workers' }} />
+        <Stack.Screen name="workers/select" options={{ title: 'Load Workers', presentation: 'modal' }} />
+        <Stack.Screen name="history/index" options={{ title: 'History' }} />
       </Stack>
     </>
   );
@@ -31,7 +37,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider key={scheme}>
-          <RootStack />
+          <SubscriptionProvider>
+            <RootStack />
+          </SubscriptionProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

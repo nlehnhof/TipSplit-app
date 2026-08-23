@@ -1,30 +1,49 @@
 import type { ReactNode } from 'react';
-import { ScrollView, Text, View, StyleSheet } from 'react-native';
+import { ScrollView, Text, View, StyleSheet, Switch, Pressable } from 'react-native';
+import { Link, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../constants/theme';
 import { spacing, radius } from '../constants/themeColors';
 import Constants from 'expo-constants';
+import { useSubscription } from '../services/subscription/SubscriptionContext';
 
 export default function SettingsScreen() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const version = Constants.expoConfig?.version ?? '1.0.0';
+  const { isPremium, loading, restorePurchases, devSetPremium } = useSubscription();
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
     >
+      <Section title="TipSplit Pro">
+        <Row label="Status" value={loading ? 'Loading…' : isPremium ? 'Active' : 'Not subscribed'} colors={colors} />
+        <RowLink href="/workers" label="Saved Workers" colors={colors} />
+        <RowLink href="/history" label="History" colors={colors} />
+        {!isPremium && <RowLink href="/paywall" label="Upgrade to Pro" colors={colors} accent />}
+        <Pressable onPress={restorePurchases} style={styles.restoreRow}>
+          <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>Restore Purchases</Text>
+        </Pressable>
+      </Section>
+
       <Section title="Currency">
         <Row label="Currency" value="USD ($)" colors={colors} />
       </Section>
 
-      <Section title="Subscription">
-        <Row label="TipSplit Pro" value="Not subscribed" colors={colors} />
-      </Section>
-
       <Section title="About">
         <Row label="Version" value={version} colors={colors} />
+      </Section>
+
+      <Section title="Developer">
+        <View style={styles.row}>
+          <Text style={{ color: colors.text, fontSize: 15 }}>Simulate Premium (temporary)</Text>
+          <Switch value={isPremium} onValueChange={devSetPremium} />
+        </View>
+        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: spacing.xs }}>
+          Local override until real App Store / Play Store billing via RevenueCat is wired up.
+        </Text>
       </Section>
 
       <View style={[styles.disclaimerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -61,6 +80,29 @@ function Row({ label, value, colors }: { label: string; value: string; colors: R
   );
 }
 
+function RowLink({
+  href,
+  label,
+  colors,
+  accent,
+}: {
+  href: Href;
+  label: string;
+  colors: ReturnType<typeof useThemeColors>;
+  accent?: boolean;
+}) {
+  return (
+    <Link href={href} asChild>
+      <Pressable style={styles.row}>
+        <Text style={{ color: accent ? colors.primary : colors.text, fontSize: 16, fontWeight: accent ? '600' : '400' }}>
+          {label}
+        </Text>
+        <Text style={{ color: colors.textMuted, fontSize: 16 }}>{'>'}</Text>
+      </Pressable>
+    </Link>
+  );
+}
+
 const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
@@ -83,7 +125,12 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: spacing.xs,
+  },
+  restoreRow: {
+    paddingVertical: spacing.xs,
+    marginTop: spacing.xs,
   },
   disclaimerCard: {
     borderWidth: 1,
