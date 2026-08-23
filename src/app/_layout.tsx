@@ -25,6 +25,9 @@ function RootStack() {
         <Stack.Screen name="paywall" options={{ title: 'TipSplit Pro', presentation: 'modal' }} />
         <Stack.Screen name="workers/index" options={{ title: 'Saved Workers' }} />
         <Stack.Screen name="workers/select" options={{ title: 'Load Workers', presentation: 'modal' }} />
+        <Stack.Screen name="teams/index" options={{ title: 'Saved Teams' }} />
+        <Stack.Screen name="teams/[id]" options={{ title: 'Team' }} />
+        <Stack.Screen name="teams/select" options={{ title: 'Load Team', presentation: 'modal' }} />
         <Stack.Screen name="history/index" options={{ title: 'History' }} />
       </Stack>
     </>

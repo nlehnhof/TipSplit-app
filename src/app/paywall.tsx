@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,18 +9,27 @@ import { useSubscription } from '../services/subscription/SubscriptionContext';
 
 const FEATURES = [
   'Saved workers — stop retyping the same names every shift',
+  'Saved teams — load a whole roster in one tap',
   'Calculation history — see past tip splits at a glance',
-  'Saved teams and cloud sync (coming soon)',
 ];
 
 export default function PaywallScreen() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { isPremium, purchasePremium } = useSubscription();
+  const { isPremium, usingRevenueCat, purchasePremium } = useSubscription();
+  const [error, setError] = useState<string | null>(null);
+  const [purchasing, setPurchasing] = useState(false);
 
   async function handleUpgrade() {
-    await purchasePremium();
-    router.back();
+    setError(null);
+    setPurchasing(true);
+    const result = await purchasePremium();
+    setPurchasing(false);
+    if (result.ok) {
+      router.back();
+    } else {
+      setError(result.message);
+    }
   }
 
   return (
@@ -51,11 +61,18 @@ export default function PaywallScreen() {
         </Text>
       ) : (
         <View style={styles.actions}>
-          <Button onPress={handleUpgrade}>Upgrade to Pro</Button>
-          <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
-            Development build: this simulates a purchase locally. Real App Store / Play Store
-            billing via RevenueCat lands before release.
-          </Text>
+          {error && (
+            <Text style={{ color: colors.danger, fontSize: 14, textAlign: 'center' }}>{error}</Text>
+          )}
+          <Button onPress={handleUpgrade} disabled={purchasing}>
+            {purchasing ? 'Processing…' : 'Upgrade to Pro'}
+          </Button>
+          {!usingRevenueCat && (
+            <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
+              Development build: this simulates a purchase locally. Real App Store / Play Store
+              billing via RevenueCat lands before release.
+            </Text>
+          )}
         </View>
       )}
     </View>

@@ -4,12 +4,20 @@ import {
   devSetPremiumOverride,
   localDevSubscriptionService,
 } from './localDevSubscriptionService';
+import { isRevenueCatConfigured, revenueCatSubscriptionService } from './revenueCatSubscriptionService';
+import type { PurchaseResult, RestoreResult, SubscriptionService } from './types';
+
+const usingRevenueCat = isRevenueCatConfigured();
+const activeService: SubscriptionService = usingRevenueCat
+  ? revenueCatSubscriptionService
+  : localDevSubscriptionService;
 
 type SubscriptionContextValue = {
   isPremium: boolean;
   loading: boolean;
-  purchasePremium: () => Promise<void>;
-  restorePurchases: () => Promise<void>;
+  usingRevenueCat: boolean;
+  purchasePremium: () => Promise<PurchaseResult>;
+  restorePurchases: () => Promise<RestoreResult>;
   devSetPremium: (enabled: boolean) => Promise<void>;
 };
 
@@ -20,20 +28,22 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    localDevSubscriptionService.isPremium().then((value) => {
-      setIsPremium(value);
-      setLoading(false);
-    });
+    activeService
+      .isPremium()
+      .then(setIsPremium)
+      .finally(() => setLoading(false));
   }, []);
 
-  async function purchasePremium() {
-    const result = await localDevSubscriptionService.purchasePremium();
+  async function purchasePremium(): Promise<PurchaseResult> {
+    const result = await activeService.purchasePremium();
     if (result.ok) setIsPremium(true);
+    return result;
   }
 
-  async function restorePurchases() {
-    const result = await localDevSubscriptionService.restorePurchases();
+  async function restorePurchases(): Promise<RestoreResult> {
+    const result = await activeService.restorePurchases();
     if (result.ok) setIsPremium(result.isPremium);
+    return result;
   }
 
   async function devSetPremium(enabled: boolean) {
@@ -43,7 +53,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SubscriptionContext.Provider
-      value={{ isPremium, loading, purchasePremium, restorePurchases, devSetPremium }}
+      value={{ isPremium, loading, usingRevenueCat, purchasePremium, restorePurchases, devSetPremium }}
     >
       {children}
     </SubscriptionContext.Provider>

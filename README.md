@@ -28,8 +28,13 @@ npm run android  # expo start --android
 npm run web      # expo start --web
 ```
 
-No environment variables are required yet — the app has no backend. `.env.example` will be added
-once authentication/subscriptions (Phase 7–8 of `EXECUTION_PLAN.md`) are implemented.
+No environment variables are required for local development — without them, Pro features run on
+a local dev-mode toggle (Settings → Developer) instead of real billing, and `npm start` (Expo Go)
+works normally. To test real RevenueCat purchases, copy `.env.example` to `.env` and see
+`docs/subscriptions.md`; this requires a dev client build (`npm run android:dev-client` /
+`ios:dev-client`) since `react-native-purchases` is a native module Expo Go can't load — **local
+Android dev-client builds are currently blocked by an upstream Expo bug**, see "Known blocker" in
+`docs/subscriptions.md` before spending time on this.
 
 ## Testing, linting, type checking
 
@@ -46,10 +51,12 @@ app — see `docs/calculation-methods.md` for the rounding/allocation contract i
 
 ## Building for production
 
-Not yet configured — no EAS build profiles, app icons, or store metadata exist yet. See
-"What's not built yet" in `docs/architecture.md`.
+`eas.json` has development/preview/production build profiles configured. App icons and store
+metadata are still Expo's defaults. See "What's not built yet" in `docs/architecture.md`.
 
 ## Docs
 
 - [`docs/architecture.md`](./docs/architecture.md) — folder structure, engine/UI boundary, what's built vs. not
 - [`docs/calculation-methods.md`](./docs/calculation-methods.md) — the four split methods, rounding, adjustments, error cases
+- [`docs/subscriptions.md`](./docs/subscriptions.md) — SubscriptionService abstraction, RevenueCat dashboard state, what's left before launch
+- [`docs/tip-splitting-research.md`](./docs/tip-splitting-research.md) — tip-pooling practices and legal research behind the disclaimer

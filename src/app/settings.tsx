@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ScrollView, Text, View, StyleSheet, Switch, Pressable } from 'react-native';
 import { Link, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,19 @@ export default function SettingsScreen() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const version = Constants.expoConfig?.version ?? '1.0.0';
-  const { isPremium, loading, restorePurchases, devSetPremium } = useSubscription();
+  const { isPremium, loading, usingRevenueCat, restorePurchases, devSetPremium } = useSubscription();
+  const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
+
+  async function handleRestore() {
+    const result = await restorePurchases();
+    setRestoreMessage(
+      result.ok
+        ? result.isPremium
+          ? 'Restored — TipSplit Pro is active.'
+          : 'No previous purchase found for this account.'
+        : result.message,
+    );
+  }
 
   return (
     <ScrollView
@@ -21,11 +33,15 @@ export default function SettingsScreen() {
       <Section title="TipSplit Pro">
         <Row label="Status" value={loading ? 'Loading…' : isPremium ? 'Active' : 'Not subscribed'} colors={colors} />
         <RowLink href="/workers" label="Saved Workers" colors={colors} />
+        <RowLink href="/teams" label="Saved Teams" colors={colors} />
         <RowLink href="/history" label="History" colors={colors} />
         {!isPremium && <RowLink href="/paywall" label="Upgrade to Pro" colors={colors} accent />}
-        <Pressable onPress={restorePurchases} style={styles.restoreRow}>
+        <Pressable onPress={handleRestore} style={styles.restoreRow}>
           <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>Restore Purchases</Text>
         </Pressable>
+        {restoreMessage && (
+          <Text style={{ color: colors.textMuted, fontSize: 13 }}>{restoreMessage}</Text>
+        )}
       </Section>
 
       <Section title="Currency">
@@ -36,15 +52,18 @@ export default function SettingsScreen() {
         <Row label="Version" value={version} colors={colors} />
       </Section>
 
-      <Section title="Developer">
-        <View style={styles.row}>
-          <Text style={{ color: colors.text, fontSize: 15 }}>Simulate Premium (temporary)</Text>
-          <Switch value={isPremium} onValueChange={devSetPremium} />
-        </View>
-        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: spacing.xs }}>
-          Local override until real App Store / Play Store billing via RevenueCat is wired up.
-        </Text>
-      </Section>
+      {!usingRevenueCat && (
+        <Section title="Developer">
+          <View style={styles.row}>
+            <Text style={{ color: colors.text, fontSize: 15 }}>Simulate Premium (temporary)</Text>
+            <Switch value={isPremium} onValueChange={devSetPremium} />
+          </View>
+          <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: spacing.xs }}>
+            Local override — set EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID / _IOS to switch to real
+            RevenueCat billing (requires a dev client build, not Expo Go).
+          </Text>
+        </Section>
+      )}
 
       <View style={[styles.disclaimerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Text style={[styles.disclaimerTitle, { color: colors.text }]}>Tip-Pooling Disclaimer</Text>

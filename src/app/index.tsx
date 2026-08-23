@@ -27,6 +27,7 @@ import { parseDecimal, parseDollarsToCents } from '../utils/parse';
 import { loadLastCalculation, saveLastCalculation } from '../storage/lastCalculation';
 import { hasSeenOnboarding } from '../storage/onboarding';
 import { loadSavedWorkers } from '../storage/savedWorkers';
+import { loadTeam } from '../storage/teams';
 import { appendHistoryEntry } from '../storage/history';
 import { useSubscription } from '../services/subscription/SubscriptionContext';
 
@@ -58,7 +59,7 @@ export default function CalculatorScreen() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const { isPremium } = useSubscription();
-  const params = useLocalSearchParams<{ loadWorkerIds?: string }>();
+  const params = useLocalSearchParams<{ loadWorkerIds?: string; loadTeamId?: string }>();
 
   const [totalTipsText, setTotalTipsText] = useState('');
   const [method, setMethod] = useState<SplitMethod>('hours');
@@ -75,12 +76,8 @@ export default function CalculatorScreen() {
     });
   }, []);
 
-  useEffect(() => {
-    if (!params.loadWorkerIds) return;
-    const ids = params.loadWorkerIds.split(',').filter(Boolean);
-    router.setParams({ loadWorkerIds: '' });
+  function addSavedWorkersToDraft(ids: string[]) {
     if (ids.length === 0) return;
-
     loadSavedWorkers().then((saved) => {
       const toAdd = saved.filter((w) => ids.includes(w.id));
       setWorkers((prev) => {
@@ -91,7 +88,23 @@ export default function CalculatorScreen() {
         return [...prev, ...drafts];
       });
     });
+  }
+
+  useEffect(() => {
+    if (!params.loadWorkerIds) return;
+    const ids = params.loadWorkerIds.split(',').filter(Boolean);
+    router.setParams({ loadWorkerIds: '' });
+    addSavedWorkersToDraft(ids);
   }, [params.loadWorkerIds]);
+
+  useEffect(() => {
+    if (!params.loadTeamId) return;
+    const teamId = params.loadTeamId;
+    router.setParams({ loadTeamId: '' });
+    loadTeam(teamId).then((team) => {
+      if (team) addSavedWorkersToDraft(team.workerIds);
+    });
+  }, [params.loadTeamId]);
 
   useEffect(() => {
     loadLastCalculation().then((stored) => {
@@ -224,9 +237,14 @@ export default function CalculatorScreen() {
             Workers
           </Text>
           <View style={styles.workersHeaderActions}>
+            <Pressable onPress={() => router.push('/teams/select')}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>
+                Load Team
+              </Text>
+            </Pressable>
             <Pressable onPress={() => router.push('/workers/select')}>
               <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>
-                Load Saved Workers
+                Load Workers
               </Text>
             </Pressable>
             <Pressable onPress={() => setShowAdvanced((v) => !v)}>
@@ -400,6 +418,7 @@ const styles = StyleSheet.create({
   },
   workersHeaderActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.md,
   },
   workerList: {

@@ -10,18 +10,23 @@
 
 ```text
 src/
-  app/            expo-router screens (index = calculator/results, settings)
-  components/     presentational, reusable UI (Button, MethodSelector, WorkerRow)
+  app/            expo-router screens (calculator/results, settings, onboarding, paywall,
+                   workers/, teams/, history/)
+  components/     presentational, reusable UI (Button, MethodSelector, WorkerRow, PremiumGate)
   calculations/   pure calculation engine — no React or UI imports
+  services/       subscription/ — SubscriptionService abstraction + local-dev and RevenueCat
+                   implementations (see docs/subscriptions.md)
   types/          shared TypeScript types
   constants/      theme (light/dark), spacing/radius tokens
-  storage/        AsyncStorage-backed local persistence
+  storage/        AsyncStorage-backed local persistence (last calculation, onboarding flag,
+                   saved workers, teams, history)
   utils/          small stateless helpers (id generation, text parsing)
 ```
 
-This is a trimmed version of the structure sketched in `TipSplit_prompt.md`. `features/`,
-`services/` (auth/subscriptions) don't exist yet because saved workers, teams, history,
-authentication, and subscriptions are not implemented — see "What's not built yet" below.
+This is a trimmed version of the structure sketched in `TipSplit_prompt.md`. There's no
+`features/` split (calculator/workers/teams/history live directly under `app/` + shared
+`storage/`/`types/`) since the app isn't large enough yet to need per-feature folders — see
+"What's not built yet" below for what's still missing.
 
 ## Calculation engine boundary
 
@@ -38,19 +43,48 @@ engine only accepts finite numbers. Conversion happens once, at calculate time
 
 ## Navigation
 
-Two routes today:
-
 - `/` — the calculator. Internally toggles between an `input` view and a `results` view using
   local component state rather than a second route, so editing a result and recalculating is
-  instant and doesn't require passing a calculation through route params.
-- `/settings` — currency (USD only for now), subscription status placeholder, and the tip-pooling
-  disclaimer required by the product spec.
+  instant and doesn't require passing a calculation through route params. Also handles first-
+  launch redirect to `/onboarding` and processes `loadWorkerIds`/`loadTeamId` route params (set
+  by the pickers below) to append saved workers/teams into the current draft.
+- `/onboarding` — first-launch-only welcome screen; sets a persisted flag and never shows again.
+- `/settings` — currency (USD only for now), live Pro status + Restore Purchases, links into the
+  screens below, and the tip-pooling disclaimer required by the product spec.
+- `/paywall` — modal upsell screen; calls `SubscriptionService.purchasePremium()`.
+- `/workers` (list/CRUD) and `/workers/select` (picker, modal) — Saved Workers.
+- `/teams` (list), `/teams/[id]` (create when `id` is the literal `"new"`, else edit), and
+  `/teams/select` (picker, modal) — Saved Teams.
+- `/history` — read-only list of past calculations.
+
+All of the above except `/`, `/onboarding`, `/settings`, and `/paywall` are wrapped in
+`<PremiumGate>` (`src/components/PremiumGate.tsx`), which renders an upsell CTA instead of the
+screen's content when `useSubscription().isPremium` is false.
 
 ## Persistence
 
-The in-progress calculation (total, method, workers) is persisted to `AsyncStorage`
-(`src/storage/lastCalculation.ts`) on a short debounce and restored on next launch, so relaunching
-the app mid-shift doesn't lose data. This is local-only; there is no cloud sync yet.
+- The in-progress calculation (total, method, workers) is persisted to `AsyncStorage`
+  (`src/storage/lastCalculation.ts`) on a short debounce and restored on next launch, so
+  relaunching the app mid-shift doesn't lose data.
+- Saved workers, teams, and history are each their own `AsyncStorage` key
+  (`src/storage/savedWorkers.ts`, `teams.ts`, `history.ts`), with simple CRUD helpers. History is
+  capped at 100 entries.
+
+All of this is local-only; there is no cloud sync yet (see "What's not built yet").
+
+## Subscriptions
+
+`SubscriptionService` (`src/services/subscription/types.ts`) is the interface every premium-gated
+screen depends on via `useSubscription()` (`SubscriptionContext.tsx`) — never on a payment
+provider directly. Two implementations exist; `SubscriptionContext` picks one at startup based on
+whether a RevenueCat API key is configured:
+
+- `localDevSubscriptionService` — an on-device AsyncStorage flag, toggleable from Settings. Used
+  whenever no RevenueCat key is set (this is the default for local Expo Go development).
+- `revenueCatSubscriptionService` — wraps `react-native-purchases` (a native module — requires a
+  dev client, not Expo Go). Used once `EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID`/`_IOS` are set.
+
+Full detail, including current RevenueCat dashboard state, in `docs/subscriptions.md`.
 
 ## Theming
 
@@ -60,16 +94,13 @@ the app mid-shift doesn't lose data. This is local-only; there is no cloud sync 
 
 ## What's not built yet
 
-Per the product spec (`TipSplit_prompt.md`), the following are explicitly out of scope for this
-pass and are not stubbed in the codebase (per the project's "no half-finished features" convention
-— they'll be built as complete vertical slices, not partial scaffolding):
+Per the project's "no half-finished features" convention, the following are not stubbed in the
+codebase — they'll be built as complete vertical slices when unblocked, not partial scaffolding:
 
-- Saved workers / saved teams (the primary premium feature)
-- Calculation history
-- Authentication (Supabase or otherwise) and cloud sync
-- `SubscriptionService` abstraction and RevenueCat/StoreKit/Play Billing integration
-- Onboarding screen (first-launch "Get Started" flow)
-- App icons / splash screen assets, EAS build profiles, store metadata
+- Authentication (Supabase or otherwise) and cloud sync for saved workers/teams
+- Real store products (Play Console + App Store Connect) and store-side RevenueCat app configs —
+  the current RevenueCat setup is Test Store only, see `docs/subscriptions.md`
+- Apple Developer Program enrollment (blocks iOS entirely — needs the user)
+- App icons / splash screen assets (still Expo's defaults), store metadata
 
-`EXECUTION_PLAN.md` has the phase-by-phase plan; the calculator, results/edit flow, local
-persistence, and settings/disclaimer correspond to Phases 2–6.
+`EXECUTION_PLAN.md` has the original phase-by-phase plan.
