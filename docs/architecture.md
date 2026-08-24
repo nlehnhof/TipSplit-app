@@ -92,15 +92,25 @@ Full detail, including current RevenueCat dashboard state, in `docs/subscription
 `useColorScheme()`, so every screen picks up light/dark automatically. Color tokens live in
 `src/constants/themeColors.ts`.
 
+## Building and deploying
+
+`npx expo run:android` (a local native build) is currently broken on Windows by an upstream Expo/
+`react-native-worklets` bug — use `eas build --platform android --profile production` instead,
+which builds on EAS's Linux servers and is unaffected. See "Resolved" note in
+`docs/subscriptions.md` for the full story. A build from this path has already been produced and
+uploaded to Play Console's Internal testing track.
+
 ## What's not built yet
 
 Per the project's "no half-finished features" convention, the following are not stubbed in the
 codebase — they'll be built as complete vertical slices when unblocked, not partial scaffolding:
 
 - Authentication (Supabase or otherwise) and cloud sync for saved workers/teams
-- Real store products (Play Console + App Store Connect) and store-side RevenueCat app configs —
-  the current RevenueCat setup is Test Store only, see `docs/subscriptions.md`
-- Apple Developer Program enrollment (blocks iOS entirely — needs the user)
-- App icons / splash screen assets (still Expo's defaults), store metadata
+- RevenueCat's Android product is still wired to the Test Store only, not the real
+  `tipsplit_pro_monthly` Play Console subscription (which exists and is Active) — needs a Google
+  Play service account for RevenueCat's server-side validation, see `docs/subscriptions.md`
+- Everything App Store/iOS-side (blocked entirely on Apple Developer Program enrollment)
+- Store listing content (privacy policy, screenshots, description) — required before promoting
+  past Play Console's Internal testing track
 
 `EXECUTION_PLAN.md` has the original phase-by-phase plan.
