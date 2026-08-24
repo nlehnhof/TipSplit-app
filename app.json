@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tipsplit.app"
+      "bundleIdentifier": "com.lehnhofsolutions.tipsplit"
     },
     "android": {
       "package": "com.tipsplit.app",

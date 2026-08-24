@@ -134,10 +134,30 @@ The account's email was not yet confirmed at time of setup (a banner in the dash
    - **Remaining non-blocking items:** paywall UI polish (RevenueCat's Paywalls tool), EAS secrets
      for `EXPO_PUBLIC_REVENUECAT_API_KEY_*` in CI builds, Play Console store listing content
      (privacy policy, screenshots) before promoting past Internal testing.
-2. **iOS is paused, not blocked** — the $99 Apple Developer Program membership purchase has been
-   submitted and is processing (can take up to 48h). Per explicit instruction, no Apple/iOS work
-   (App Store Connect app record, StoreKit product, RevenueCat Apple app, iOS EAS build) starts
-   until the user confirms enrollment finished.
+2. **iOS is now in progress (started 2026-08-24).** Apple Developer Program membership is active
+   (License Agreement accepted 2026-08-23). Progress so far:
+   - **Bundle ID**: `com.tipsplit.app` was already taken globally on Apple's platform (unrelated
+     account) — registered `com.lehnhofsolutions.tipsplit` instead as the App ID in Certificates,
+     Identifiers & Profiles. `app.json`'s `ios.bundleIdentifier` updated to match. Android's
+     package name (`com.tipsplit.app`) is unaffected — the two platforms don't share a namespace.
+   - **App Store Connect app record** created: display name `TipSplit: Tip Splitter` (the plain
+     "TipSplit" name was also already taken globally), SKU `tipsplit-ios`, Apple app ID
+     `6804705644`.
+   - **StoreKit subscription** created: group "TipSplit Pro" → subscription `TipSplit Pro Monthly`
+     (Apple ID `6804706562`), product ID `tipsplit_pro_monthly` (matches the Android product ID
+     for consistency, though the namespaces are separate), 1-month duration, $4.99 USD base price
+     with regional pricing auto-converted for all 175 countries/regions, localized display
+     name/description (English U.S.), status "Prepare for Submission" — Apple requires a
+     subscription's first submission to go out with an app build, so this stays in that state
+     until an app version reaches TestFlight/review.
+   - **7-day free introductory offer** added (mirrors the Android offer): "Free for the first
+     week", all 175 countries, start date 2026-08-24, no end date.
+   - **Still to do**: create the RevenueCat "App Store" app under Project Settings → Apps (needs
+     an App Store Connect API key or in-app purchase key for server-side receipt validation),
+     import/attach `tipsplit_pro_monthly` to the `pro` entitlement and `default` offering, run an
+     iOS EAS build (`eas build --platform ios` — first run will need Apple signing
+     credentials/certificates, which EAS can generate and manage), upload to TestFlight, and
+     submit the app + subscription together for App Review.
 3. **A paywall UI review** — the current paywall (`src/app/paywall.tsx`) is functional but plain;
    consider RevenueCat's Paywalls tool (visible in the left nav) once the Android RevenueCat
    product is wired, since it can be updated remotely without an app release.
