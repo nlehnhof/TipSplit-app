@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TipSplit",
-    "slug": "TipSplit",
+    "slug": "tipsplit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -39,6 +39,13 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5f8db7a7-776c-4634-9448-f383b546e5f8"
+      }
+    },
+    "owner": "lehnhof-solutions-team"
   }
 }
