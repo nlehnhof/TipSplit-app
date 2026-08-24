@@ -91,21 +91,45 @@ The account's email was not yet confirmed at time of setup (a banner in the dash
   (auto-renewing, monthly, 7-day grace period), **Active**, priced at $4.99 USD with regional
   pricing auto-converted for all 177 available countries/regions.
 
+## Google Cloud service account state (as of 2026-08-23)
+
+- Service account `revenuecat-play-publisher@tipsplit-506501.iam.gserviceaccount.com` created in
+  GCP project `tipsplit-506501`. Key downloaded as `google-play-service-account.json` (gitignored,
+  project root — never commit).
+- Play Console → Users and permissions: this service account is added as a user with **app-scoped**
+  access to TipSplit only (not account-wide), granted: View app information, View app quality
+  information, View financial data, Manage orders and subscriptions, Release apps to testing
+  tracks. Deliberately **not** granted "Release to production" (least-privilege — internal
+  testing/staging only for now).
+- Cloud Pub/Sub API enabled on the project; service account also granted the **Pub/Sub Editor**
+  IAM role at the project level, for RevenueCat's "Google developer notifications" (real-time
+  purchase/renewal/cancellation webhook) feature.
+- `eas.json`'s `submit.production.android` points at the local `google-play-service-account.json`
+  (`serviceAccountKeyPath`) with `track: "internal"`, so `eas submit --platform android` can
+  upload future builds straight to Internal testing without going through the Play Console UI.
+
 ## What's still required before this goes live
 
-1. **Connect the real Play Store product to RevenueCat.** The dashboard state above (entitlement
-   `pro` → product `tipsplit_pro_monthly` → offering `default`) is currently wired to
-   RevenueCat's **Test Store** only. To go live on Android: in RevenueCat, add a "Google Play"
-   app under Project Settings → Apps (package `com.tipsplit.app`), which requires a Google Cloud
-   service account JSON with Play Developer API access granted in Play Console (Users and
-   permissions → Service accounts) — needed for RevenueCat to server-side-validate real Play
-   purchases. Then create a product entry for `tipsplit_pro_monthly` under that Play Store app and
-   attach it to the same `pro` entitlement / `default` offering. This service account is also
-   what `eas submit` would use to automate future Play Console uploads, so it's worth setting up
-   once rather than per-need.
-2. **iOS is still fully blocked** — Apple Developer Program enrollment ($99/yr + identity
-   verification) hasn't been done. Nothing App Store-side can proceed (StoreKit product, TestFlight,
-   RevenueCat's Apple app) until this exists.
+1. **RevenueCat credential validation is currently stuck on Google-side propagation delay.**
+   Confirmed directly in Play Console that the service account has both "View financial data" and
+   "Manage orders and subscriptions" on the TipSplit app (screenshotted and verified checkbox-by-
+   checkbox) — this is not a misconfiguration. RevenueCat's "Check credentials" still reports only
+   one failing check: **"Can validate Google Play subscription purchases"** (the other two —
+   reading the in-app product catalog and the subscription/base-plan catalog — pass). Google's own
+   documentation and community reports note this specific permission (`Manage orders and
+   subscriptions`, used for the purchases.subscriptions.get API) can take a few hours to fully
+   propagate after being granted, even though the Play Console UI shows it as granted immediately.
+   **Next step: periodically click "Check again" on the RevenueCat app config page
+   (`app.revenuecat.com/projects/e27797bb/apps/app6982788c41`) — no further Play Console/GCP
+   changes are believed to be needed.** Once it passes: add a product entry for
+   `tipsplit_pro_monthly` under this Play Store app in RevenueCat and attach it to the `pro`
+   entitlement / `default` offering (currently only wired to the Test Store product), then connect
+   "Google developer notifications" (Pub/Sub topic) on the same page now that the IAM role is
+   granted.
+2. **iOS is paused, not blocked** — the $99 Apple Developer Program membership purchase has been
+   submitted and is processing (can take up to 48h). Per explicit instruction, no Apple/iOS work
+   (App Store Connect app record, StoreKit product, RevenueCat Apple app, iOS EAS build) starts
+   until the user confirms enrollment finished.
 3. **A paywall UI review** — the current paywall (`src/app/paywall.tsx`) is functional but plain;
    consider RevenueCat's Paywalls tool (visible in the left nav) once the Android RevenueCat
    product is wired, since it can be updated remotely without an app release.
@@ -115,4 +139,5 @@ The account's email was not yet confirmed at time of setup (a banner in the dash
    on the local dev-mode Pro toggle.
 5. **Play Console warnings to eventually address** (non-blocking): no deobfuscation/mapping file
    uploaded for R8/ProGuard crash symbolication; no privacy policy URL or store listing filled in
-   yet (required before promoting past internal testing).
+   yet (required before promoting past internal testing); no testers added yet to the Internal
+   testing track, so the uploaded build isn't visible to anyone.
