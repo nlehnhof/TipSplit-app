@@ -41,7 +41,7 @@ export default function PaywallScreen() {
     >
       <Text style={[styles.title, { color: colors.text }]}>TipSplit Pro</Text>
       <Text style={{ color: colors.textMuted, marginBottom: spacing.lg }}>
-        Everything in the free calculator, plus:
+        Try free for 7 days. Everything in the free calculator, plus:
       </Text>
 
       <View style={styles.featureList}>
@@ -65,8 +65,12 @@ export default function PaywallScreen() {
             <Text style={{ color: colors.danger, fontSize: 14, textAlign: 'center' }}>{error}</Text>
           )}
           <Button onPress={handleUpgrade} disabled={purchasing}>
-            {purchasing ? 'Processing…' : 'Upgrade to Pro'}
+            {purchasing ? 'Processing…' : 'Start free trial'}
           </Button>
+          <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
+            7 days free, then $4.99/month. Cancel anytime before the trial ends and you
+            won&rsquo;t be charged.
+          </Text>
           {!usingRevenueCat && (
             <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
               Development build: this simulates a purchase locally. Real App Store / Play Store

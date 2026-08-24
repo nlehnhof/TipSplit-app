@@ -90,6 +90,15 @@ The account's email was not yet confirmed at time of setup (a banner in the dash
 - Real subscription product created: **`tipsplit_pro_monthly`**, base plan `monthly`
   (auto-renewing, monthly, 7-day grace period), **Active**, priced at $4.99 USD with regional
   pricing auto-converted for all 177 available countries/regions.
+- Offer **`7-day-free-trial`** added to the `monthly` base plan and **Active**: a 7-day free
+  trial phase, eligibility "New customer acquisition" (`Never had this subscription`), available
+  in all 174 countries the base plan covers. `src/app/paywall.tsx` reflects this in its copy
+  ("Try free for 7 days" / "Start free trial" / cancel-anytime disclaimer). Once RevenueCat's
+  Play Store connection is validated (see below) and the real product is attached to the `pro`
+  entitlement, this trial is picked up automatically — no separate RevenueCat-side trial config
+  needed for Android.
+- Internal testing track has one tester: `j.lehnhof01@gmail.com` (list `TipSplit_Testers`), track
+  is now **Active**.
 
 ## Google Cloud service account state (as of 2026-08-23)
 
