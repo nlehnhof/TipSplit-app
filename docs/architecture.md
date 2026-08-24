@@ -106,10 +106,7 @@ Per the project's "no half-finished features" convention, the following are not 
 codebase — they'll be built as complete vertical slices when unblocked, not partial scaffolding:
 
 - Authentication (Supabase or otherwise) and cloud sync for saved workers/teams
-- RevenueCat's Android product is still wired to the Test Store only, not the real
-  `tipsplit_pro_monthly` Play Console subscription (which exists and is Active) — needs a Google
-  Play service account for RevenueCat's server-side validation, see `docs/subscriptions.md`
-- Everything App Store/iOS-side (blocked entirely on Apple Developer Program enrollment)
+- Everything App Store/iOS-side (RevenueCat Apple app, StoreKit product, TestFlight, iOS EAS build)
 - Store listing content (privacy policy, screenshots, description) — required before promoting
   past Play Console's Internal testing track
 

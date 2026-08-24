@@ -117,23 +117,23 @@ The account's email was not yet confirmed at time of setup (a banner in the dash
   (`serviceAccountKeyPath`) with `track: "internal"`, so `eas submit --platform android` can
   upload future builds straight to Internal testing without going through the Play Console UI.
 
-1. **RevenueCat credential validation is now PASSING** (as of 2026-08-23, a few hours after the
-   Play Console permissions were granted — confirming it was Google-side propagation delay, not a
-   misconfiguration). The app page shows "✓ Valid credentials". Remaining Android work:
-   - **Attach the real product.** Add a product entry for `tipsplit_pro_monthly` under this Play
-     Store app in RevenueCat and attach it to the `pro` entitlement / `default` offering (currently
-     only wired to the Test Store product).
-   - **Google developer notifications (Pub/Sub) — still blocked.** Clicking "Connect to Google"
-     with topic `Play-Store-Notifications` fails: *"Your Google service account credentials do not
-     have permission to create a Google Cloud Pub/Sub topic."* Per RevenueCat's own troubleshooting
-     guide, this requires **both** `Pub/Sub Editor` **and** `Monitoring Viewer` IAM roles on the
-     service account — only `Pub/Sub Editor` was granted initially. Added `Monitoring Viewer` too
-     (GCP IAM, project `tipsplit-506501`) but "Connect to Google" still failed immediately after —
-     likely the same kind of propagation delay as the main credential check, just shorter. Retry
-     "Connect to Google" on the RevenueCat app page later; if it still fails after a while, per
-     RevenueCat's docs try re-generating and re-uploading the service account JSON key (they claim
-     role changes sometimes need a fresh key to take effect, though this is IAM-permission-based
-     and shouldn't technically require it).
+1. **Android RevenueCat integration is now fully connected end-to-end (as of 2026-08-24).**
+   - Credential validation passes ("✓ Valid credentials") — was blocked purely on Google-side IAM
+     propagation delay, not a misconfiguration.
+   - Google developer notifications connected: topic `Play-Store-Notifications`
+     (`projects/tipsplit-506501/topics/Play-Store-Notifications`), status "Connected to Google".
+     Required **both** `Pub/Sub Editor` and `Monitoring Viewer` IAM roles on the service account
+     (only Editor was granted initially, per RevenueCat's troubleshooting guide) — the second
+     attempt after adding `Monitoring Viewer` succeeded once IAM propagated.
+   - Real product imported: `tipsplit_pro_monthly:monthly` (RevenueCat's `<product_id>:<base_plan_id>`
+     naming) is Published under the "TipSplit (Play Store)" app and attached to the `pro`
+     entitlement.
+   - The `default` offering's `$rc_monthly` package now maps to **both** the Test Store product
+     (for local/dev testing) and the real Play Store product (for production) — one product per
+     store app, same package.
+   - **Remaining non-blocking items:** paywall UI polish (RevenueCat's Paywalls tool), EAS secrets
+     for `EXPO_PUBLIC_REVENUECAT_API_KEY_*` in CI builds, Play Console store listing content
+     (privacy policy, screenshots) before promoting past Internal testing.
 2. **iOS is paused, not blocked** — the $99 Apple Developer Program membership purchase has been
    submitted and is processing (can take up to 48h). Per explicit instruction, no Apple/iOS work
    (App Store Connect app record, StoreKit product, RevenueCat Apple app, iOS EAS build) starts
