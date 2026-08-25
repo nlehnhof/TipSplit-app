@@ -106,9 +106,9 @@ Per the project's "no half-finished features" convention, the following are not 
 codebase — they'll be built as complete vertical slices when unblocked, not partial scaffolding:
 
 - Authentication (Supabase or otherwise) and cloud sync for saved workers/teams
-- App Store/iOS-side: StoreKit subscription exists in App Store Connect (see
-  `docs/subscriptions.md`) but nothing has shipped — no RevenueCat Apple app, no iOS EAS build,
-  no TestFlight build, no App Review submission yet
+- App Store/iOS-side: StoreKit subscription and RevenueCat Apple app are both fully wired (see
+  `docs/subscriptions.md`) but nothing has shipped yet — no iOS EAS build, no TestFlight build,
+  no App Review submission
 - Store listing content (privacy policy, screenshots, description) — required before promoting
   past Play Console's Internal testing track
 

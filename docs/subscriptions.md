@@ -152,12 +152,29 @@ The account's email was not yet confirmed at time of setup (a banner in the dash
      until an app version reaches TestFlight/review.
    - **7-day free introductory offer** added (mirrors the Android offer): "Free for the first
      week", all 175 countries, start date 2026-08-24, no end date.
-   - **Still to do**: create the RevenueCat "App Store" app under Project Settings → Apps (needs
-     an App Store Connect API key or in-app purchase key for server-side receipt validation),
-     import/attach `tipsplit_pro_monthly` to the `pro` entitlement and `default` offering, run an
-     iOS EAS build (`eas build --platform ios` — first run will need Apple signing
-     credentials/certificates, which EAS can generate and manage), upload to TestFlight, and
-     submit the app + subscription together for App Review.
+   - **RevenueCat "App Store" app connected.** Created under Project Settings → Apps (bundle ID
+     `com.lehnhofsolutions.tipsplit`, RevenueCat app ID `app2b4a833fd2`), authenticated with an
+     App Store Connect **In-App Purchase key** (Key ID `JRC34794CH`, generated from Users and
+     Access → Integrations → In-App Purchase in App Store Connect — simpler than the general App
+     Store Connect API key, which needs org-level "Request Access" approval; the in-app purchase
+     key is sufficient for RevenueCat's receipt/transaction validation and didn't need that).
+     Credentials validated immediately (no propagation delay, unlike Android's). The downloaded
+     `.p8` key file lives only in the local Downloads folder — never committed, not needed again
+     unless the app is reconfigured.
+   - **Product wired end-to-end**: added `tipsplit_pro_monthly` manually under the App Store app
+     in RevenueCat (Product catalog → New Product, since no full App Store Connect API key means
+     no auto-import — this was a one-time manual entry, matching what auto-import would have
+     produced), attached to the `pro` entitlement, and added to the `default` offering's
+     `$rc_monthly` package alongside the Test Store and Play Store products — one package, one
+     product per store, exactly like Android.
+   - **Remaining before this ships**: run an iOS EAS build (`eas build --platform ios` — first run
+     needs Apple signing credentials/certificates, which EAS can generate and manage
+     automatically), upload the build to TestFlight, and submit the app + subscription together
+     for App Review (Apple requires a subscription's first submission to go out with an app
+     build, which is why the subscription itself is still "Prepare for Submission" in App Store
+     Connect). Optionally: generate a full App Store Connect API key later (Users and Access →
+     Integrations → App Store Connect API, needs org access approval) to enable auto-import and
+     automatic price-change syncing — not required for purchases to work.
 3. **A paywall UI review** — the current paywall (`src/app/paywall.tsx`) is functional but plain;
    consider RevenueCat's Paywalls tool (visible in the left nav) once the Android RevenueCat
    product is wired, since it can be updated remotely without an app release.
