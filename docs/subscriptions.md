@@ -184,14 +184,18 @@ The account's email was not yet confirmed at time of setup (a banner in the dash
      (`AuthKey_6U6FP93C84.p8`, downloadable once) lives in the project root, gitignored (`*.p8` was
      already covered); `eas.json`'s `submit.production.ios` references it by relative path plus
      `ascAppId`/`ascApiKeyId`/`ascApiKeyIssuerId` so future submissions are a single non-interactive
-     command. Apple is now processing the binary (~5–10 min); once done it's visible at
-     `https://appstoreconnect.apple.com/apps/6804705644/testflight/ios`.
-   - **What's left**: once the build finishes processing, add internal testers in TestFlight (or
-     submit the app + the `TipSplit Pro Monthly` subscription together for App Review — Apple
-     requires a subscription's first submission to go out with an app build, which is why the
-     subscription is still "Prepare for Submission" in App Store Connect). Optionally connect
-     `.p8` submission credentials to EAS's remote credential store via `eas credentials` so the
-     key doesn't need to live on this machine specifically.
+     command.
+   - **Processing finished — build 4 (version 1.0.0) is "Ready to Submit" in TestFlight.**
+     Created an internal testing group `TipSplit_Testers` (automatic distribution enabled) and
+     added `n.lehnhof01@gmail.com` (the account holder) as a tester — status "Invited", pending
+     accepting the TestFlight invite email and installing the TestFlight app.
+   - **What's left**: accept the TestFlight invite and verify the app installs/runs correctly on a
+     real device, then submit the app + the `TipSplit Pro Monthly` subscription together for App
+     Review (Apple requires a subscription's first submission to go out with an app build, which
+     is why the subscription is still "Prepare for Submission" in App Store Connect — TestFlight
+     alone doesn't trigger this). Optionally connect `.p8` submission credentials to EAS's remote
+     credential store via `eas credentials` so the key doesn't need to live on this machine
+     specifically.
 3. **A paywall UI review** — the current paywall (`src/app/paywall.tsx`) is functional but plain;
    consider RevenueCat's Paywalls tool (visible in the left nav) once the Android RevenueCat
    product is wired, since it can be updated remotely without an app release.
