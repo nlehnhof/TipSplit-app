@@ -20,6 +20,12 @@
       "android": {
         "serviceAccountKeyPath": "./google-play-service-account.json",
         "track": "internal"
+      },
+      "ios": {
+        "ascAppId": "6804705644",
+        "ascApiKeyPath": "./AuthKey_6U6FP93C84.p8",
+        "ascApiKeyIssuerId": "1d4fe59c-2364-4851-b8dd-dff45fbeeadb",
+        "ascApiKeyId": "6U6FP93C84"
       }
     }
   }
