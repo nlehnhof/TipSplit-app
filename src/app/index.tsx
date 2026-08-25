@@ -24,7 +24,7 @@ import type { CalculateTipSplitSuccess, SplitMethod, WorkerInput } from '../type
 import { SPLIT_METHOD_LABELS } from '../types/tipSplit';
 import { createId } from '../utils/id';
 import { parseDecimal, parseDollarsToCents } from '../utils/parse';
-import { loadLastCalculation, saveLastCalculation } from '../storage/lastCalculation';
+import { clearLastCalculation, loadLastCalculation, saveLastCalculation } from '../storage/lastCalculation';
 import { hasSeenOnboarding } from '../storage/onboarding';
 import { loadSavedWorkers } from '../storage/savedWorkers';
 import { loadTeam } from '../storage/teams';
@@ -153,6 +153,15 @@ export default function CalculatorScreen() {
     setWorkers((prev) => prev.filter((w) => w.id !== id));
   }
 
+  function handleClearAll() {
+    setTotalTipsText('');
+    setMethod('hours');
+    setWorkers([]);
+    setShowAdvanced(false);
+    setErrorMessage(null);
+    clearLastCalculation();
+  }
+
   function handleCalculate() {
     const totalTipsCents = parseDollarsToCents(totalTipsText);
     const workerInputs = workers.map((w) => toWorkerInput(w, method, showAdvanced));
@@ -208,9 +217,18 @@ export default function CalculatorScreen() {
       >
         <View style={styles.headerRow}>
           <Text style={[styles.title, { color: colors.text }]}>TipSplit</Text>
-          <Link href="/settings" accessibilityLabel="Settings">
-            <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>Settings</Text>
-          </Link>
+          <View style={styles.headerActions}>
+            {(totalTipsText !== '' || workers.length > 0) && (
+              <Pressable onPress={handleClearAll} accessibilityLabel="Clear all">
+                <Text style={{ color: colors.danger, fontSize: 15, fontWeight: '600' }}>
+                  Clear All
+                </Text>
+              </Pressable>
+            )}
+            <Link href="/settings" accessibilityLabel="Settings">
+              <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>Settings</Text>
+            </Link>
+          </View>
         </View>
 
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
@@ -381,6 +399,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.sm,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   title: {
     fontSize: 28,
