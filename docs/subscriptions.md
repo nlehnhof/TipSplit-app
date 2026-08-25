@@ -167,14 +167,31 @@ The account's email was not yet confirmed at time of setup (a banner in the dash
      produced), attached to the `pro` entitlement, and added to the `default` offering's
      `$rc_monthly` package alongside the Test Store and Play Store products — one package, one
      product per store, exactly like Android.
-   - **Remaining before this ships**: run an iOS EAS build (`eas build --platform ios` — first run
-     needs Apple signing credentials/certificates, which EAS can generate and manage
-     automatically), upload the build to TestFlight, and submit the app + subscription together
-     for App Review (Apple requires a subscription's first submission to go out with an app
-     build, which is why the subscription itself is still "Prepare for Submission" in App Store
-     Connect). Optionally: generate a full App Store Connect API key later (Users and Access →
-     Integrations → App Store Connect API, needs org access approval) to enable auto-import and
-     automatic price-change syncing — not required for purchases to work.
+   - **iOS build shipped to TestFlight (2026-08-24).** `eas build --platform ios --profile
+     production` needed one interactive, one-time step — generating the initial Distribution
+     Certificate requires genuine terminal interactivity (confirmed: even `eas-cli` invoked
+     through this session's shell reports `stdin.isTTY: undefined`, so it always falls back to
+     non-interactive mode and refuses first-time cert generation). The user ran the build command
+     directly in their own terminal and answered the one prompt (`ITSAppUsesNonExemptEncryption`
+     → `false`, since the app only uses standard HTTPS/TLS — now saved in `app.json` so it won't
+     ask again). Build succeeded (`8efed7b7-aafc-4602-806b-b87c4bc135c6`, version 1.0.0 build 4).
+   - **Submitted via `eas submit --platform ios`**, non-interactively, using a full **App Store
+     Connect API key** (Admin role, Key ID `6U6FP93C84`) generated from Users and Access →
+     Integrations → App Store Connect API in App Store Connect — this needed one-time
+     "Request Access" approval (auto-granted instantly for this solo/individual account) beyond
+     what the in-app-purchase key alone covers, since build/submit credential management needs
+     broader API scope than purchase validation does. The key file
+     (`AuthKey_6U6FP93C84.p8`, downloadable once) lives in the project root, gitignored (`*.p8` was
+     already covered); `eas.json`'s `submit.production.ios` references it by relative path plus
+     `ascAppId`/`ascApiKeyId`/`ascApiKeyIssuerId` so future submissions are a single non-interactive
+     command. Apple is now processing the binary (~5–10 min); once done it's visible at
+     `https://appstoreconnect.apple.com/apps/6804705644/testflight/ios`.
+   - **What's left**: once the build finishes processing, add internal testers in TestFlight (or
+     submit the app + the `TipSplit Pro Monthly` subscription together for App Review — Apple
+     requires a subscription's first submission to go out with an app build, which is why the
+     subscription is still "Prepare for Submission" in App Store Connect). Optionally connect
+     `.p8` submission credentials to EAS's remote credential store via `eas credentials` so the
+     key doesn't need to live on this machine specifically.
 3. **A paywall UI review** — the current paywall (`src/app/paywall.tsx`) is functional but plain;
    consider RevenueCat's Paywalls tool (visible in the left nav) once the Android RevenueCat
    product is wired, since it can be updated remotely without an app release.
