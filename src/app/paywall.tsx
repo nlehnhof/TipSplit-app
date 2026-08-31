@@ -18,13 +18,13 @@ export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
   const { isPremium, usingRevenueCat, purchasePremium } = useSubscription();
   const [error, setError] = useState<string | null>(null);
-  const [purchasing, setPurchasing] = useState(false);
+  const [purchasing, setPurchasing] = useState<'trial' | 'subscribe' | null>(null);
 
-  async function handleUpgrade() {
+  async function handleUpgrade(intent: 'trial' | 'subscribe') {
     setError(null);
-    setPurchasing(true);
+    setPurchasing(intent);
     const result = await purchasePremium();
-    setPurchasing(false);
+    setPurchasing(null);
     if (result.ok) {
       router.back();
     } else {
@@ -41,7 +41,7 @@ export default function PaywallScreen() {
     >
       <Text style={[styles.title, { color: colors.text }]}>TipSplit Pro</Text>
       <Text style={{ color: colors.textMuted, marginBottom: spacing.lg }}>
-        Try free for 7 days. Everything in the free calculator, plus:
+        Everything in the free calculator, plus:
       </Text>
 
       <View style={styles.featureList}>
@@ -64,13 +64,17 @@ export default function PaywallScreen() {
           {error && (
             <Text style={{ color: colors.danger, fontSize: 14, textAlign: 'center' }}>{error}</Text>
           )}
-          <Button onPress={handleUpgrade} disabled={purchasing}>
-            {purchasing ? 'Processing…' : 'Start free trial'}
+          <Button onPress={() => handleUpgrade('trial')} disabled={purchasing !== null}>
+            {purchasing === 'trial' ? 'Starting trial…' : 'Start Free Trial'}
           </Button>
           <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
             7 days free, then $4.99/month. Cancel anytime before the trial ends and you
             won&rsquo;t be charged.
           </Text>
+          <Button variant="secondary" onPress={() => handleUpgrade('subscribe')} disabled={purchasing !== null}>
+            {purchasing === 'subscribe' ? 'Subscribing…' : 'Subscribe Now'}
+          </Button>
+          <Text style={[styles.disclaimer, { color: colors.textMuted }]}>$4.99/month.</Text>
           {!usingRevenueCat && (
             <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
               Development build: this simulates a purchase locally. Real App Store / Play Store

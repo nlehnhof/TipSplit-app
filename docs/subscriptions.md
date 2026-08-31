@@ -199,6 +199,23 @@ The account's email was not yet confirmed at time of setup (a banner in the dash
 3. **A paywall UI review** — the current paywall (`src/app/paywall.tsx`) is functional but plain;
    consider RevenueCat's Paywalls tool (visible in the left nav) once the Android RevenueCat
    product is wired, since it can be updated remotely without an app release.
+   - The paywall has two CTAs, "Start Free Trial" and "Subscribe Now" — both call the identical
+     `purchasePremium()`/`Purchases.purchasePackage()` flow, because the `default` offering has
+     only one package (`$rc_monthly`). Whether the purchase actually includes the 7-day trial is
+     decided by the store (Apple/Google's own "has this customer had this subscription before"
+     eligibility check), not by which button was tapped — a trial-eligible user tapping
+     "Subscribe Now" still gets the trial. A genuine no-trial purchase path would need a second,
+     no-trial offer/package configured in RevenueCat and selected explicitly in code (see
+     `purchasePremium` in `revenueCatSubscriptionService.ts`, which currently always takes
+     `offerings.current?.availablePackages[0]`).
+   - Payment details themselves are collected by the native App Store/Play Store purchase sheet
+     that `Purchases.purchasePackage()` triggers — before any trial starts, once RevenueCat is
+     the active backend. Locally, whenever `EXPO_PUBLIC_REVENUECAT_API_KEY_*` is unset,
+     `SubscriptionContext` falls back to `localDevSubscriptionService`, whose `purchasePremium()`
+     just sets an AsyncStorage flag and returns `{ ok: true }` — no details are asked for at all.
+     That's expected for local dev (see "Simulate Premium" in Settings), but worth remembering
+     when eyeballing the paywall locally: the "asks for payment details before the trial"
+     behavior only shows up once a dev-client build with real RevenueCat keys is used.
 4. **`.env` handling for CI/EAS builds** — `EXPO_PUBLIC_REVENUECAT_API_KEY_*` need to be set as
    EAS secrets (`eas secret:create`) for production builds; `.env` itself is gitignored and never
    committed. Not yet done — the build above shipped without RevenueCat keys set, so it still runs
